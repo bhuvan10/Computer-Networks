@@ -18,7 +18,7 @@ memset (&serverAddr,0,sizeof(serverAddr));
 /*memset() is used to fill a block of memory with a particular value*/
 serverAddr.sin_family = AF_INET;
 serverAddr.sin_port = htons(12345); //You can change port number here Page 6 of 8
-serverAddr.sin_addr.s_addr = inet_addr("172.18.16.31"); //Specify server's IP address here
+serverAddr.sin_addr.s_addr = inet_addr("172.17.79.125"); //Specify server's IP address here
 printf ("Address assigned\n");
 /*ESTABLISH CONNECTION*/
 int c = connect (sock, (struct sockaddr*) &serverAddr , sizeof

@@ -33,11 +33,11 @@ int main()
     }
     printf("Connection Established\n");
     /*SEND DATA*/
-    float d=0;
-    scanf("%f",&d);
+    while(1)
+    {
+    printf("ENTER MESSAGE FOR SERVER with max 32 characters\n");
     char msg[BUFSIZE];
-
-    sprintf(msg,"%f",d);
+    gets(msg);
     int bytesSent = send(sock, msg, strlen(msg), 0);
     if (bytesSent != strlen(msg))
     {
@@ -46,6 +46,10 @@ int main()
     }
     printf("Data Sent\n");
     /*RECEIVE BYTES*/
+    if (strcmp(msg, ":exit") == 0)
+    {
+        break;
+    }
     char recvBuffer[BUFSIZE];
     int bytesRecvd = recv(sock, recvBuffer, BUFSIZE - 1, 0);
     if (bytesRecvd < 0)
@@ -55,5 +59,6 @@ int main()
     }
     recvBuffer[bytesRecvd] = '\0';
     printf("%s\n", recvBuffer);
+    }
     close(sock);
 }

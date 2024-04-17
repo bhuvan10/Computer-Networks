@@ -5,6 +5,7 @@
 #include <string.h>
 #include <unistd.h> // close() function
 #define BUFSIZE 32
+
 int main()
 {
     /* CREATE A TCP SOCKET*/
@@ -20,7 +21,7 @@ int main()
     memset(&serverAddr, 0, sizeof(serverAddr));
     /*memset() is used to fill a block of memory with a particular value*/
     serverAddr.sin_family = AF_INET;
-    serverAddr.sin_port = htons(12345);                // You can change port number here
+    serverAddr.sin_port = htons(12345);                      // You can change port number here Page 6 of 8
     serverAddr.sin_addr.s_addr = inet_addr("172.17.79.125"); // Specify server's IP address here
     printf("Address assigned\n");
     /*ESTABLISH CONNECTION*/
@@ -33,27 +34,30 @@ int main()
     }
     printf("Connection Established\n");
     /*SEND DATA*/
-    float d=0;
-    scanf("%f",&d);
-    char msg[BUFSIZE];
-
-    sprintf(msg,"%f",d);
-    int bytesSent = send(sock, msg, strlen(msg), 0);
-    if (bytesSent != strlen(msg))
+    while (1)
     {
-        printf("Error while sending the message");
-        exit(0);
+        printf("ENTER MESSAGE FOR SERVER with max 32 characters\n");
+        char msg[BUFSIZE];
+        gets(msg);
+        int bytesSent = send(sock, msg, strlen(msg), 0);
+        if (bytesSent != strlen(msg))
+        {
+            printf("Error while sending the message");
+            exit(0);
+        }
+        printf("Data Sent\n");
+        /*RECEIVE BYTES*/
+        char recvBuffer[BUFSIZE];
+        int bytesRecvd = recv(sock, recvBuffer, BUFSIZE - 1, 0);
+        if (bytesRecvd < 0)
+        {
+            printf("Error while receiving data from server");
+            exit(0);
+        }
+        recvBuffer[bytesRecvd] = '\0';
+        printf("%s\n", recvBuffer);
+        if(strcmp(recvBuffer,"GoodBye")==0)
+            break;
     }
-    printf("Data Sent\n");
-    /*RECEIVE BYTES*/
-    char recvBuffer[BUFSIZE];
-    int bytesRecvd = recv(sock, recvBuffer, BUFSIZE - 1, 0);
-    if (bytesRecvd < 0)
-    {
-        printf("Error while receiving data from server");
-        exit(0);
-    }
-    recvBuffer[bytesRecvd] = '\0';
-    printf("%s\n", recvBuffer);
     close(sock);
 }

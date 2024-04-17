@@ -29,6 +29,39 @@ char *handle_get(char *request) {
     fclose(file);
     return "Key not found";
 }
+// Function to handle delete request
+char *handle_delete(char *request) {
+    char key[100];
+    sscanf(request, "delete %s", key);
+    char tmp_file[] = "temp.txt";
+    FILE *input_file = fopen("database.txt", "r");
+    FILE *output_file = fopen(tmp_file, "w");
+    char line[BUFFERSIZE];
+
+    int found = 0;
+    while (fgets(line, sizeof(line), input_file)) {
+        char current_key[100], value[100];
+        sscanf(line, "%s %s", current_key, value);
+        if (strcmp(current_key, key) != 0) {
+            fputs(line, output_file);
+        } else {
+            found = 1;
+        }
+    }
+
+    fclose(input_file);
+    fclose(output_file);
+
+    if (found) {
+        remove("database.txt");
+        rename(tmp_file, "database.txt");
+        return "OK";
+    } else {
+        remove(tmp_file);
+        return "Key not found";
+    }
+}
+
 int main ()
 {
 /*CREATE A TCP SOCKET*/
@@ -78,7 +111,7 @@ flag=1;
 break;}
 else {
 printf("Client: %s\n", msg);
-strcpy(msg,handle_put(msg));
+strcpy(msg,handle_delete(msg));
 send(newSocket, msg, strlen(msg), 0);
 bzero(msg, sizeof(msg));
 }
@@ -90,23 +123,4 @@ if(flag==1)
 break;
 }
 }
-// int clientSocket = accept (serverSocket, (struct sockaddr*)
-// &clientAddress, &clientLength);
-// if (clientLength < 0) {printf ("Error in client socket"); exit(0);}
-// printf ("Handling Client %s\n", inet_ntoa(clientAddress.sin_addr));
-// int temp2 = recv(clientSocket, msg, BUFFERSIZE, 0);
-// if (temp2 < 0)
-// { printf ("problem in temp 2");
-// exit (0);
-// }
-// printf ("%s\n", msg);
-// printf ("ENTER MESSAGE FOR CLIENT\n");
-// gets (msg);
-// int bytesSent = send (clientSocket,msg,strlen(msg),0);
-// if (bytesSent != strlen(msg))
-// { printf ("Error while sending message to client");
-// exit(0);
-// }
-// close (serverSocket);
-// close (clientSocket);
 }

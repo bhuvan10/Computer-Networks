@@ -58,8 +58,8 @@ int main()
     printf("%s\n", msg);
     // printf("ENTER MESSAGE FOR CLIENT\n");
     // gets(msg);
-    int data=atoi(msg);
-    sprintf(msg,"%d",data+1);
+    float data=atof(msg);
+    sprintf(msg,"%f",data+1);
     int bytesSent = send(clientSocket, msg, strlen(msg), 0);
     if (bytesSent != strlen(msg))
     {
