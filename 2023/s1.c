@@ -120,7 +120,7 @@ int main(void)
                 if (!should_drop_packet())
                 {
                      fprintf(fp,rcv_pkt.data,rcv_pkt.sz);
-                     ack_pkt.sq_no = 1;
+                     ack_pkt.sq_no = 0;
                     if (sendto(s, &ack_pkt, recv_len, 0, (struct sockaddr *)&si_other,
                                slen) == -1)
                     {
@@ -152,14 +152,14 @@ int main(void)
             {
                 die("recvfrom()");
             }
-            if (rcv_pkt.sq_no == 1&&rcv_pkt.sender==0)
+            if (rcv_pkt.sq_no == 1&&rcv_pkt.sender==1)
             {
                 printf("Packet received with seq. no. %d and Packet bytes is = %d\n", rcv_pkt.sq_no, rcv_pkt.sz);
                 
                 if (!should_drop_packet())
                 {
                     fprintf(fp,rcv_pkt.data,rcv_pkt.sz);
-                    ack_pkt.sq_no = 0;
+                    ack_pkt.sq_no = 1;
                     if (sendto(s, &ack_pkt, recv_len, 0, (struct sockaddr *)&si_other,
                                slen) == -1)
                     {
