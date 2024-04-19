@@ -31,6 +31,7 @@ int main(void)
     struct sockaddr_in si_other;
     int s, i, slen = sizeof(si_other);
     char buf[BUFLEN];
+    char *line_buf=NULL;
     char message[BUFLEN];
     DATA_PKT send_pkt, rcv_ack;
     struct timeval timeout;
@@ -52,7 +53,6 @@ int main(void)
         printf("File opern error");
         return 1;
     }
-    int nread = 0;
     int drop_flag=0;
     while (1)
     {
@@ -62,11 +62,11 @@ int main(void)
             // wait for sending packet with seq.no. 0
             previous=fp;
             if(drop_flag==0)
-            nread = fread(send_pkt.data, 1, 256, fp);
-            send_pkt.sz=nread;
+            fgets(send_pkt.data,BUFLEN,fp);
+            send_pkt.sz=strlen(send_pkt.data);
             send_pkt.lastpkt=0;
             // fgets(send_pkt.data, sizeof(send_pkt), stdin);
-            send_pkt.data[nread]='\0';
+            //send_pkt.data[nread]='\0';
             if(feof(fp))
             {
                 send_pkt.lastpkt=1;
@@ -121,15 +121,15 @@ int main(void)
         case 2:
             previous=fp;
             if(drop_flag==0)
-            nread = fread(send_pkt.data, 1, 256, fp);
-            send_pkt.sz=nread;
+            fgets(send_pkt.data,BUFLEN,fp);
+            send_pkt.sz=strlen(send_pkt.data);
             send_pkt.lastpkt=0;
             // fgets(send_pkt.data, sizeof(send_pkt), stdin);
             if(feof(fp))
             {
                 send_pkt.lastpkt=1;
             }
-            send_pkt.data[nread]='\0';
+            //send_pkt.data[nread]='\0';
             printf("message 1: %d\n", send_pkt.sz);
             // wait for sending packet with seq. no. 1
             send_pkt.sq_no = 1;

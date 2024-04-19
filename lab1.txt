@@ -1,0 +1,12 @@
+1.In HTTP, "\r\n" represents a carriage return and line feed, indicating the end of each line in the HTTP header. It's a delimiter between header fields.
+2.The end of the HTTP message is indicated by an empty line, i.e., "\r\n\r\n". After the headers, there's a blank line followed by the body (if any).
+3.The version of HTTP used is HTTP/1.1, as indicated in the request line "GET /CSF303/lab1_first_page.htm HTTP/1.1". It's necessary to include the HTTP version in the message because it helps the server understand which version of the protocol the client is using, allowing the server to respond appropriately.
+4.The connection type is persistent because the request includes the header "Connection: keep-alive". This header indicates that the client wants to keep the TCP connection open for further requests, thus making it a persistent connection.
+5. Source IP address 172.24.1.117 . Destination IP address: 172.24.16.9
+6. HTTP operates at the application layer of the OSI model and uses TCP (Transmission Control Protocol) as its transport layer protocol.
+7. Source port number: 51724. Destination port number: 80. These are specified in the Transmission Control Protocol (TCP) header.
+8. To determine the time taken from sending the HTTP GET message to receiving the HTTP OK reply, you would need to analyze the timestamps in the captured data. The difference between the timestamps of the two frames would give you the duration. (5.957680 - 5.959019)
+9. The "Date" header in the HTTP OK reply indicates the current date and time according to the server's clock when the response was generated. The "Last-modified" header indicates the date and time when the requested resource was last modified on the server. The difference lies in their purposes: "Date" reflects the time of the server's response, while "Last-modified" indicates the time of the resource's last modification.
+10. Even though the URL specifies the host, it's included in the HTTP GET message as part of the Host header. This allows the server to properly route the request, especially in situations where multiple websites are hosted on the same server.
+11. Yes, HTTP typically works on port 80 for non-secure connections (HTTP) and port 443 for secure connections (HTTPS). In this case, the destination port number is 80, which is a common port for HTTP.
+12.The line "Response in frame: some_number" indicates that the corresponding HTTP response is captured in the frame mentioned. To verify, you can look at the frame with the specified number to find the HTTP response.
