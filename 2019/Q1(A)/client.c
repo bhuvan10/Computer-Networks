@@ -139,7 +139,7 @@ int main(void)
             {
                 printf("Acknowledgement received of seq no. : %d\n", rcv_ack.seq_no);
                 drop_flag = 0;
-                state = 0;
+                state = 2;
             }
             else
             {
@@ -205,15 +205,15 @@ int main(void)
                 printf("Connection closed by server.\n");
                 exit(1);
             }
-            if (rcv_ack.seq_no == 0)
+            if (rcv_ack.seq_no == 1)
             {
                 printf("Acknowledgement received of seq no. : %d\n", rcv_ack.seq_no);
                 drop_flag = 0;
-                state = 2;
+                state = 0;
             }
             else
             {
-                state = 1;
+                state = 3;
             }
             break;
         }

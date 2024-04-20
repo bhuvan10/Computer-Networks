@@ -1,0 +1,7 @@
+1. tcp.flags.syn == 1 or tcp.flags.ack == 1
+2. tcp.flags.reset == 1
+3. tcp.len > 20 and ip.addr == <your_ip_address>
+4. tcp.analysis.duplicate_ack
+5. tcp.analysis.out_of_order
+
+

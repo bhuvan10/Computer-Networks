@@ -1,0 +1,31 @@
+Based on the steps provided, let's answer each question:
+
+Q1. Which transport layer protocol is used?
+A1. The DNS query messages typically use the User Datagram Protocol (UDP) as the transport layer protocol.
+
+Q2. What is the transaction ID of the message?
+A2. The transaction ID is a unique identifier assigned to each DNS query message. To determine the transaction ID, we would need to inspect the captured DNS packet in Wireshark.
+
+Q3. What is the query section? What is the type of query and what does it signify about the type of query? Is there any other type of query you can recall?
+A3. The query section of a DNS packet contains information about the query being made. It includes the domain name being queried and the type of query. The type of query signifies the purpose of the DNS query. For example, if the type of query is "A" (Address), it means the query is seeking the IPv4 address corresponding to the domain name. Other types of queries include "AAAA" (IPv6 address), "MX" (Mail Exchange), "CNAME" (Canonical Name), etc.
+
+Q4. What is the IP address of the DNS server?
+A4. To determine the IP address of the DNS server, we would need to inspect the captured DNS packet in Wireshark, specifically looking at the source IP address of the DNS response packet.
+
+Q5. What is the destination port number? Remember that it is fixed for all DNS messages.
+A5. The destination port number for DNS messages is typically port 53 for both UDP and TCP protocols.ˀ
+
+
+Let's address each question based on the DNS response message:
+
+Q1. What is the transport layer protocol?
+A1. The transport layer protocol used in DNS response messages is typically the User Datagram Protocol (UDP). 
+
+Q2. What is the transaction ID of this message? Is it same as that of corresponding DNS query message?
+A2. The transaction ID of the DNS response message should match the transaction ID of the corresponding DNS query message. The transaction ID serves as a unique identifier to match responses with queries.
+
+Q3. Along with the answer, is there any authoritative name server also? What is its type and what does it signifies?
+A3. Yes, in the DNS response message, there should be an authoritative name server if the response is authoritative. The authoritative name server is designated as such in the response. It signifies that the DNS server providing the response is authoritative for the domain queried. The type of the authoritative name server is typically an NS (Name Server) record.
+
+Q4. Is there any other field (for example additional records, etc.)? What does it signify?
+A4. Yes, besides the answer section which contains the requested information (such as IP addresses corresponding to the domain name), there may be additional sections in the DNS response message. One common additional section is the Additional Records section. This section typically contains extra information such as IP addresses of other DNS servers (glue records), IPv6 addresses, or other relevant data that can assist in the resolution process.
