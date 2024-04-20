@@ -1,166 +1,303 @@
-/* Client program Broken FTP */
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <netinet/in.h>
-#include <netdb.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <errno.h>
-#include <arpa/inet.h>
+
+
+#include "packet.h"
+
+#define RETRATIME 2 // (In Terms of Seconds) Retransmission Time
+
+int state = 0;
+
 void die(char *s)
 {
-    perror(s);
-    exit(1);
+	perror(s);
+	exit(1);
 }
-typedef struct packet
+
+struct timeval timeout;
+
+int main(int argc, char *argv[])
 {
-    int seq_no;
-    int size;
-    char data[256];
-    int lastpkt;
-    int channel;
-    int type;
-} pkt;
-typedef struct packet1
-{
-    int seq_no;
-} pkt1;
-int main(void)
-{
-    int sockfd1 = 0,sockfd2=0;
-    pkt send_pkt;
-    pkt rcv_ack;
-    // unsigned char buff_offset[10]; // buffer to send the File offset value
-    // unsigned char buff_command[2]; // buffer to send the Complete File (0) or Partial File Command (1).
-    // int offset;                    // required to get the user input for offset in case of partial file command
-    // int command;                   // required to get the user input for command
-    memset(send_pkt.data, '0', sizeof(send_pkt.data));
-    struct sockaddr_in serv_addr;
-    struct timeval timeout;
-    fd_set fds;
-    /* Create a socket first */
-    if ((sockfd1 = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-    {
-        printf("\n Error : Could not create socket \n");
-        return 1;
-    }
-    if ((sockfd2 = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-    {
-        printf("\n Error : Could not create socket \n");
-        return 1;
-    }
-    /* Initialize sockaddr_in data structure */
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port = htons(8888); // port
-    serv_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-    /* Attempt a connection */
-    if (connect(sockfd1, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
-    {
-        printf("\n Error : Connect Failed \n");
-        return 1;
-    }
-    if (connect(sockfd2, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
-    {
-        printf("\n Error : Connect Failed \n");
-        return 1;
-    }
-    /* Create file where data will be stored */
-    FILE *fp;
-    fp = fopen("input.txt", "r");
-    if (NULL == fp)
-    {
-        printf("Error opening file");
-        return 1;
-    }
-    int seq=0;
-    fgets(send_pkt.data,256,fp);
-    send_pkt.size=strlen(send_pkt.data);
-    send_pkt.seq_no=seq;
-    send_pkt.type=0;
-    send_pkt.channel=1;
-    if(write(sockfd1,&send_pkt,sizeof(send_pkt))!=0)
-        die("write()");
-    seq+=send_pkt.size;
-    fgets(send_pkt.data,256,fp);
-    send_pkt.size=strlen(send_pkt.data);
-    send_pkt.seq_no=seq;
-    send_pkt.type=0;
-    send_pkt.channel=2;
-    if(write(sockfd2,&send_pkt,sizeof(send_pkt))!=0)
-        die("write()");
-    seq+=send_pkt.size;
-    // Else { command = 0 then no need to send the value of offset }
-    /* Receive data in chunks of 256 bytes */
-    int flag = 0;
-    int state = 0;
-    int ready = 0;
-    int drop_flag = 0;
-    int nread = 0;
-    int bytesReceived = 0;
-    while (1)
-    {
-        /* First read file in chunks of 256 bytes */
-        switch (state)
-        {
-        case 0:
-        {
-            if(read(sockfd1,&rcv_ack,sizeof(rcv_ack)))
-            {
-                state=rcv_ack.channel;
-            }
-            else if(read(sockfd2,&rcv_ack,sizeof(rcv_ack)))
-            {
-                state=rcv_ack.channel;
-            }
-            break;
-        }
-        case 1:
-        {
-            if(feof(fp))
-            {
-                flag=1;
-                break;
-            }
-            fgets(send_pkt.data,256,fp);
-            send_pkt.size=strlen(send_pkt.data);
-            send_pkt.channel=1;
-            send_pkt.lastpkt=0;
-            send_pkt.seq_no=seq;
-            if(feof(fp))
-                send_pkt.lastpkt=1;
-            write(sockfd1,&send_pkt,sizeof(send_pkt));
-            seq+=send_pkt.size;
-            state=0;
-            break;
-        }
-        case 2:
-        {
-            if(feof(fp))
-            {
-                flag=1;
-                break;
-            }
-            fgets(send_pkt.data,256,fp);
-            send_pkt.size=strlen(send_pkt.data);
-            send_pkt.channel=1;
-            send_pkt.lastpkt=0;
-            send_pkt.seq_no=seq;
-            if(feof(fp))
-                send_pkt.lastpkt=1;
-            write(sockfd2,&send_pkt,sizeof(send_pkt));
-            seq+=send_pkt.size;
-            state=0;
-            break;
-        }
-        
-        }
-        if (flag == 1)
-            break;
-    }
-    fclose(fp);
-    close(sockfd1);
-    close(sockfd2);
-    return 0;
+	if(argc != 3)
+	{
+		printf("Command Line Arguments on as per format. Check readme.txt.\n");
+		exit(1);
+	}
+
+	timeout.tv_sec = RETRATIME; // sets the timeout time as 2 seconds
+	timeout.tv_usec = 0;
+
+	int totalframes;
+
+	char buffer[PACKET_SIZE+1];
+
+	char filename[100];
+	memset(filename,0,100);
+	strcpy(filename,argv[2]); // Set file name here to be transmitted
+
+	FILE *f = fopen(filename,"r");
+
+	if(f == NULL)
+	{
+		printf("Error Opening The File %s",argv[2]);
+		exit(0);
+	}
+
+	int sock[2];
+
+	/* CREATE A TCP SOCKET*/
+	
+	sock[0] = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+	sock[1] = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+
+	if(sock[0] < 0) 
+	{ 
+		printf ("Error in opening a socket 0");
+		exit (0);
+	}
+	//printf ("Client Socket 0 Created.\n");
+
+	if(sock[1] < 0) 
+	{ 
+		printf ("Error in opening a socket 1");
+		exit (0);
+	}
+	//printf ("Client Socket 1 Created.\n");
+		
+	/*CONSTRUCT SERVER ADDRESS STRUCTURE*/
+	
+	struct sockaddr_in serverAddr;
+	memset(&serverAddr,0,sizeof(serverAddr));
+	serverAddr.sin_family = AF_INET;
+	serverAddr.sin_port = htons(atoi(argv[1])); //You can change port number here
+	serverAddr.sin_addr.s_addr = inet_addr(serAddr); //Specify server's IP address here
+	//printf("Address assigned.\n");
+	
+	/*ESTABLISH CONNECTION*/
+
+	int conn[2];
+	
+	conn[0] = connect(sock[0], (struct sockaddr*) &serverAddr, sizeof(serverAddr));
+	if (conn[0] < 0)
+	{ 
+		printf("Error while establishing connection\n");
+		exit (0);
+	}
+	//printf ("Connection Established for Socket 0\n");
+
+	conn[1] = connect(sock[1], (struct sockaddr*) &serverAddr, sizeof(serverAddr));
+	if (conn[1] < 0)
+	{ 
+		printf("Error while establishing connection\n");
+		exit (0);
+	}
+	//printf ("Connection Established for Socket 1\n");
+
+	/************************************* Operations here START *************************************/
+
+	int eofflag = 0;
+
+	int i;   				// PACKET_SIZE Iterator
+	char ch,ch2; 				// Read Character from input.txt file
+	int randch = 0;
+
+	int offset = 0;
+
+	totalframes = 0;
+
+	while(!eofflag)
+	{
+		for(i = 0; i < PACKET_SIZE && ch2 != EOF; i++)
+		{
+			ch2 = fgetc(f);
+		}
+		if(ch2 == EOF)
+			eofflag = 1;
+
+		totalframes++;
+	}
+
+	eofflag = 0;
+
+	FILE *f1 = fopen(filename,"r");
+	Frame frames[totalframes];
+	int fra = 0;
+	srand(time(0));
+
+	while(!eofflag)
+	{
+		memset(buffer,0,PACKET_SIZE+1);
+
+		for(i = 0; i < PACKET_SIZE && ch != EOF; i++)
+		{
+			ch = fgetc(f1);
+			if(ch != EOF)
+				buffer[i]=ch;
+		}
+		if(ch == EOF)
+			eofflag = 1;
+
+		randch = (rand()%(1-0+1)) + 0;
+
+		Frame newFrame;
+		newFrame.psize = i;
+		offset += i;
+		newFrame.seq = offset;
+		if(eofflag)
+			newFrame.lp = 1;
+		else
+			newFrame.lp = 0;
+		newFrame.dora = 1;
+		newFrame.ch = randch;
+		strcpy(newFrame.pack.data, buffer);
+		newFrame.totalframes = totalframes;
+
+		frames[fra++] = newFrame;
+	}
+
+	int j = 0; // Frames Iterator
+
+	eofflag = 0;
+
+	int jeof = 0;
+	int j1eof = 0;
+
+	printf("\n***** Client Trace *****\n\n");
+
+	while(!eofflag)
+	{
+		Frame currentFrame = frames[j];
+		Frame nextFrame;
+
+		if(frames[j].lp == 1)
+			jeof = 1;
+
+		if(!jeof)
+			nextFrame = frames[j+1];
+
+		if(frames[j+1].lp == 1)
+			j1eof = 1;
+
+		Frame recvACK;
+		Frame nextrecvACK;
+
+		switch(state)
+		{
+			case 0:
+					// if(setsockopt(sock[currentFrame.ch], SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(timeout)) < 0)
+            		// 	perror("setsockopt(SO_RCVTIMEO) failed");
+
+					if(send(sock[currentFrame.ch], &frames[j], sizeof(Frame), 0) != sizeof(Frame))
+					{
+						printf("Error while sending the frame");
+						exit(0);
+					}
+
+					printf("SENT PCK: Seq No: %d of size %d bytes from channel %d\n", currentFrame.seq, currentFrame.psize, currentFrame.ch);
+
+					state = 1;
+					break;
+
+			case 1:
+					//printf("\n************** Current Frame -> ************\n");
+
+					//printFrame(currentFrame);
+
+					if(recv(sock[currentFrame.ch], &recvACK, sizeof(Frame), 0) == 0)
+					{
+						printf("\n\nDidn't get ACK for Seq 0\n\n");
+						state = 0;
+					}
+					else
+					{
+						//printf("\n************** Received Frame Seq 0 -> ************\n");
+
+						//printFrame(recvACK);
+
+						if(recvACK.seq == currentFrame.seq)
+						{
+							//printf("\n\nReceived ACK for Seq. no. %d\n\n", recvACK.seq);
+							state = 2;
+						}
+						else
+						{
+							state = 0;
+							break;
+						}
+
+						if(jeof)
+						{
+							state = 0;
+							eofflag = 1;
+						}
+						else
+							state = 2;
+
+						printf("RCVD ACK: for PKT with Seq. No. %d from channel %d\n", recvACK.seq+1, recvACK.ch);
+					}
+
+					break;
+
+			case 2:
+					// if(setsockopt(sock[nextFrame.ch], SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(timeout)) < 0)
+            		// 	perror("setsockopt(SO_RCVTIMEO) failed");
+
+					if(send(sock[nextFrame.ch], &frames[j+1], sizeof(Frame), 0) != sizeof(Frame))
+					{
+						printf("Error while sending the frame");
+						exit(0);
+					}
+
+					printf("SENT PCK: Seq No: %d of size %d bytes from channel %d\n", nextFrame.seq, nextFrame.psize, nextFrame.ch);
+
+					state = 3;
+					break;
+
+			case 3:
+					//printf("\n************** Next Frame -> ************\n");
+
+					//printFrame(nextFrame);
+
+					if(recv(sock[nextFrame.ch], &nextrecvACK, sizeof(Frame), 0) < 0)
+					{
+						//printf("\n\nDidn't get ACK for Seq 1\n\n");
+						state = 2;
+						break;
+					}
+					else
+					{
+						if(nextrecvACK.seq == nextFrame.seq)
+						{
+							//printf("\n************** Received Frame Seq 1 -> ************\n");
+
+							//printFrame(nextrecvACK);
+
+							//printf("\n\nReceived ACK for Seq. no. %d\n\n", nextrecvACK.seq);
+							state = 0;
+						}
+						else
+						{
+							state = 2;
+							break;
+						}
+
+						if(j1eof)
+							eofflag = 1;
+
+						printf("RCVD ACK: for PKT with Seq. No. %d from channel %d\n", nextrecvACK.seq+1, nextrecvACK.ch);
+
+						j = j + 2;
+					}
+
+					break;
+		}
+	}
+
+	printf("\nTransmission completed from input.txt (from client) to output.txt (server.txt)\n\n");
+
+	/************************************* Operations here END *************************************/
+
+	fclose(f1);
+	close(sock[0]);
+	close(sock[1]);
+
+	return 0;
 }
