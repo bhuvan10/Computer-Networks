@@ -31,6 +31,7 @@ int should_drop_packet()
     return (rand() % 100) < 20;
 }
 int count=0;
+
 int main(void)
 {
     struct sockaddr_in si_me, si_other;

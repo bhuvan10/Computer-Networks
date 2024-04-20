@@ -25,6 +25,23 @@ void die(char *s)
     perror(s);
     exit(1);
 }
+void getval(char *data,FILE* fp)
+{
+    int i=0;
+    char c;
+    while((c=fgetc(fp))!=EOF)
+    {
+        if(c==','||c=='\n')
+        {
+            break;
+        }
+        else
+        {
+            data[i++]=c;
+        }
+    }
+    data[i]='\0';
+}
 int main(void)
 {
     int sockfd = 0;
@@ -76,7 +93,7 @@ int main(void)
             previous = fp;
             if (drop_flag == 0)
             {
-                fgets(send_pkt.data,BUFLEN,fp);
+                getval(send_pkt.data,fp);
                 send_pkt.sz=strlen(send_pkt.data);
             }
             send_pkt.lastpkt = 0;
@@ -139,7 +156,7 @@ int main(void)
             previous = fp;
             if (drop_flag == 0)
             {
-                fgets(send_pkt.data,BUFLEN,fp);
+                getval(send_pkt.data,fp);
                 send_pkt.sz=strlen(send_pkt.data);
             }
             send_pkt.lastpkt = 0;

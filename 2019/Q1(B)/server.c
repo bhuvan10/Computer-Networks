@@ -18,12 +18,12 @@
 
 typedef struct PACKET
 {
-    int sq_no;
+    int seq_no;
+    int size;
+    char data[256];
     int lastpkt;
-    int sz;
-    int sender;
+    int channel;
     int type;
-    char data[BUFLEN];
 } pkt;
 void die(char *s)
 {
@@ -168,7 +168,7 @@ int main()
 
         // else its some IO operation on some other socket
         for (i = 0; i < max_clients; i++) {
-            sd = client_socket[seq];
+            sd = client_socket[i];
 
             if (FD_ISSET(sd, &readfds))
             {
@@ -176,31 +176,27 @@ int main()
                 {
                     die("read()");
                 }
-
-                    if(i==1)
-                    rcv_data.data[rcv_data.sz-1]='\n';
-                    else
-                    rcv_data.data[rcv_data.sz-1]=',';
                 
-                printf("bytes received %d from %d with seq no %d %s\n", rcv_data.sz, seq + 1, rcv_data.sq_no,rcv_data.data);
-                fprintf(fp, rcv_data.data, rcv_data.sz);
-                send_ack.sq_no = rcv_data.sq_no;
+                
+                printf("bytes received %d from %d with seq no %d %s\n", rcv_data.size, seq + 1, rcv_data.seq_no,rcv_data.data);
+                fprintf(fp, rcv_data.data, rcv_data.size);
+                send_ack.seq_no = rcv_data.seq_no;
                 send_ack.type = 1;
+                send_ack.channel=rcv_data.channel;
                 if (write(sd, &send_ack, sizeof(send_ack)) == 0)
                 {
                     die("send()");
                 }
                 if (rcv_data.lastpkt == 1)
                 {
-                    count++;
+                     close(client_socket[0]);
+                        close(client_socket[1]);
+                        close(master_socket);
+                        fclose(fp);
+                        return 0;
                 }
-                seq ^= 1;
             }
         }
     }
-    close(client_socket[0]);
-    close(client_socket[1]);
-    close(master_socket);
-    fclose(fp);
-    return 0;
+    
 }
